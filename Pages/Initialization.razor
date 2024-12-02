@@ -1,0 +1,49 @@
+﻿@if (isLoading)
+{
+    <div class="k-p-md">
+        <TelerikCarousel Data="@GamificationData" Width="100%" Height="50vh">
+            <Template>
+                <div class="k-p-md k-whitespace-normal">
+                    @((MarkupString)context.HtmlContent)
+                </div>
+            </Template>
+        </TelerikCarousel>
+    </div>
+
+    <TelerikChunkProgressBar Value="@ProgressValue()"
+                             ChunkCount="@TaskCount()" Max="@TaskCount()" />
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public InitProgress? Progress { get; set; }
+    bool isLoading => Progress is null || !Progress.Text.Contains("Finish loading");
+
+    int ProgressValue() => ExtractValue('[', '/');
+
+    int TaskCount() => ExtractValue('/', ']');
+
+    bool hasProgressWithChunks => Progress is not null && Progress.Text.Contains("[");
+
+    int ExtractValue(char d, char d2) => hasProgressWithChunks ? int.Parse(Progress!.Text.Substring(Progress.Text.IndexOf(d) + 1, Progress.Text.IndexOf(d2) - Progress.Text.IndexOf(d) - 1)) : 1;
+
+
+    Intro[] GamificationData = new Intro[] {
+        new("🐌<b>NOTICE:</b> This demo runs a Large language Model (LLM) in the browser using WebLLM. <b>Everything is slow</b> These are hardware intensive tasks. For better performance allow your browser to run with 🖥️ GPU priority and⚡hardware acceleration."),
+        new("<b>In-Browser Inference:</b> WebLLM is a high-performance in-browser language model inference engine that leverages WebGPU for hardware acceleration, enabling powerful language model operations directly within web browsers without the need for server-side processing"),
+        new("<b>OpenAI API Compatibility:</b> WebLLM is fully compatible with the OpenAI API, allowing developers to use the same API for any open-source models locally. This means you can seamlessly integrate WebLLM into your applications with functionalities like streaming, JSON-mode, and function-calling."),
+        new("<p>Extensive Model Support:</p> WebLLM supports a wide range of models, including Llama 3, Phi 3, Gemma, Mistral, Qwen, and many others. This versatility makes it suitable for various AI tasks and applications.")
+
+    };
+
+    private record Intro(string HtmlContent);
+
+}

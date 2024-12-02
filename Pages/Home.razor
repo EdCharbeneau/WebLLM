@@ -1,0 +1,60 @@
+﻿@page "/"
+@inject IJSRuntime js
+@inject WebLLMService llm
+
+<PageTitle>Home</PageTitle>
+<style>
+    body {
+background: linear-gradient(0deg, rgba(205,245,253,1) 0%, rgba(160,233,255,1) 54%, rgba(137,207,243,1) 80%, rgba(0,169,255,1) 100%) fixed;
+    }
+</style>
+
+<div style="max-width: 768px;" class="k-m-auto k-w-full k-bg-app-surface k-rounded-t-md">
+    <Initialization Progress="@progress">
+        <div class="k-p-md">
+            <TelerikAIPrompt OnPromptRequest="@HandlePromptRequest" />
+        </div>
+    </Initialization>
+
+    <TelerikAppBar ThemeColor="light" PositionMode="AppBarPositionMode.Sticky" Position="AppBarPosition.Bottom">
+        <AppBarSection>
+            <span>@status</span>
+        </AppBarSection>
+    </TelerikAppBar>
+
+</div>
+
+@code {
+
+    string status = "";
+
+    InitProgress? progress;
+
+    protected override async Task OnInitializedAsync()
+    {
+        llm.OnInitializingChanged += OnWebLLMInitialization;
+        await llm.Initialize();
+    }
+
+    private void OnWebLLMInitialization(InitProgress p)
+    {
+        progress = p;
+        status = p.Text;
+        StateHasChanged();
+    }
+
+    async Task HandlePromptRequest(AIPromptPromptRequestEventArgs args)
+    {
+        status = "Local Model: Thinking... this may take awhile";
+        StateHasChanged();
+        if (string.IsNullOrWhiteSpace(args.Prompt))
+        {
+            args.Prompt = "I need a recipe for unicorn pie.";
+        }
+        Message chatMessage = new() { Role = "user", Content = args.Prompt };
+        var response = await llm.CompleteAsync(new[] { chatMessage });
+        args.Output = response.Choices[0].Message.Content;
+        status = "Whew, thanks for waiting.";
+        StateHasChanged();
+    }
+}
